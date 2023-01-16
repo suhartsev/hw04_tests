@@ -1,10 +1,9 @@
 from unittest import TestCase
 
-from posts.forms import PostForm
-from posts.models import Post, Group, User
-
+from django.test import Client, TestCase
 from django.urls import reverse
-from django.test import TestCase, Client
+from posts.forms import PostForm
+from posts.models import Group, Post, User
 
 
 class PostCreateFormTest(TestCase):
@@ -15,7 +14,7 @@ class PostCreateFormTest(TestCase):
         cls.user = User.objects.create_user(username='User_test')
         cls.post = Post.objects.create(
             text='text_test',
-            author=cls.user
+            author=cls.user,
         )
         cls.group = Group.objects.create(
             title='Title',
@@ -28,7 +27,7 @@ class PostCreateFormTest(TestCase):
         self.authorized_client.force_login(self.user)
 
     def test_create_post_form(self):
-        """Проверка:Создаётся ли новая запись в базе данных, создавая пост"""
+        """Проверка: Создаётся ли новая запись в базе данных, создавая пост"""
         post_count = Post.objects.count()
         form_data = {
             'text': 'text',

@@ -16,7 +16,8 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # константа для лимита вывода постов на страницу(константа для views.py)
-LIMIT_POSTS = 10
+LIMIT_POSTS_TEN = 10
+LIMIT_POSTS_THREE = 3
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/

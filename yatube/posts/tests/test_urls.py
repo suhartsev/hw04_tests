@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-
 from posts.models import Group, Post
 
 User = get_user_model()
@@ -48,7 +47,7 @@ class PostURLTests(TestCase):
                 self.assertTemplateUsed(response, template)
 
     def test_urls_exists_at_desired_location(self):
-        """Проверка страниц на доступность."""
+        """Проверка страниц на доступность авторизованному пользователю."""
         static_urls = {
             '/': HTTPStatus.OK,
             '/create/': HTTPStatus.OK,
@@ -62,9 +61,22 @@ class PostURLTests(TestCase):
                 response = self.authorized_client.get(address)
                 self.assertEqual(response.status_code, response_on_url)
 
+    def test_urls_exists_at_desired_location_all_users(self):
+        """Проверка страниц на доступность госям (всем пользователям)."""
+        static_urls = {
+            '/': HTTPStatus.OK,
+            '/group/slug_test/': HTTPStatus.OK,
+            '/profile/User_test/': HTTPStatus.OK,
+            '/posts/1/': HTTPStatus.OK,
+        }
+        for address, response_on_url in static_urls.items():
+            with self.subTest(address=address):
+                response = self.guest_client.get(address)
+                self.assertEqual(response.status_code, response_on_url)
+
     def test_unexisting_page(self):
         """Проверка: Страница /unexisting_page/ не существует 404"""
-        response = self.authorized_client.get('/unexisting_page/')
+        response = self.guest_client.get('/unexisting_page/')
         self.assertEqual(response.status_code, 404)
 
     def test_post_create_url_exists_at_desired_location(self):
