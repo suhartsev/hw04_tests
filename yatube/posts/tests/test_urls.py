@@ -29,7 +29,7 @@ class PostURLTests(TestCase):
 
     def setUp(self):
         self.guest_client = Client()
-        self.authorized_client = Client(self.user)
+        self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
     def test_urls_uses_correct_template(self):
