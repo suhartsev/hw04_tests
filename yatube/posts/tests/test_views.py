@@ -134,7 +134,7 @@ class PostsViewsTests(TestCase):
         )
         self.assertNotIn(post, response.context.get('page_obj'))
         group2 = response.context.get('group')
-        self.assertNotEqual(group2, self.group)
+        self.assertNotEqual(group2, PostsViewsTests.group)
 
 
 class PaginatorTest(TestCase):
