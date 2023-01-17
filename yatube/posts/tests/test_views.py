@@ -130,7 +130,10 @@ class PostsViewsTests(TestCase):
         """Проверка: Созданный пост не появился в другой группе"""
         post = PostsViewsTests.post
         response = self.authorized_client.get(
-            reverse('posts:group_list', kwargs={'slug': self.group2.slug})
+            reverse(
+                'posts:group_list',
+                kwargs={'slug': PostsViewsTests.group2.slug}
+            )
         )
         self.assertNotIn(post, response.context.get('page_obj'))
         group2 = response.context.get('group')
@@ -138,7 +141,6 @@ class PostsViewsTests(TestCase):
 
 
 class PaginatorTest(TestCase):
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
