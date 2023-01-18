@@ -188,9 +188,47 @@ class PaginatorViewsTest(TestCase):
         )
         for address, args in pagin_urls:
             with self.subTest(address=address):
-                for page, units in pages_units:
+                for page, count_posts in pages_units:
                     with self.subTest(page=page):
                         response = self.authorized_author.get(
                             reverse(address, args=args) + page
                         )
-        self.assertEqual(len(response.context['page_obj']), units)
+        self.assertEqual(len(response.context['page_obj']), count_posts)
+
+    # def test_page_one_contains_ten_records(self):
+    #     """Проверка: пагинатор на 1 странице index, group_list, profile"""
+    #     templates_names = [
+    #         reverse('posts:index'),
+    #         reverse(
+    #             'posts:group_list',
+    #             kwargs={'slug': self.group.slug}),
+    #         reverse(
+    #             'posts:profile',
+    #             kwargs={'username': self.author}),
+    #     ]
+    #     for name in templates_names:
+    #         with self.subTest(name=name):
+    #             response = self.client.get(name)
+    #             self.assertEqual(
+    #                 len(response.context['page_obj']),
+    #                 LIMIT_POSTS_TEN
+    #             )
+
+    # def test_page_two_contains_ten_records(self):
+    #     """Проверка: пагинатор на 2 странице index, group_list, profile"""
+    #     templates_names = [
+    #         reverse('posts:index'),
+    #         reverse(
+    #             'posts:group_list',
+    #             kwargs={'slug': self.group.slug}),
+    #         reverse(
+    #             'posts:profile',
+    #             kwargs={'username': self.author}),
+    #     ]
+    #     for name in templates_names:
+    #         with self.subTest(name=name):
+    #             response = self.client.get(name + '?page=2')
+    #             self.assertEqual(
+    #                 len(response.context['page_obj']),
+    #                 LIMIT_POSTS_THREE
+    #             )
