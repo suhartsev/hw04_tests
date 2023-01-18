@@ -1,9 +1,20 @@
 from django import forms
-from django.conf import settings
 from django.test import Client, TestCase
 from django.urls import reverse
 
 from posts.models import Group, Post, User
+
+TOTAL_POSTS = 13
+LIMIT_POSTS_THREE = 3
+LIMIT_POSTS_TEN = 10
+USERNAME = 'User_test'
+TEXT = 'text_test'
+GROUP1_SLUG = 'slug_test'
+GROUP1_TITLE = "Title"
+GROUP1_DESCRIPTION = "descr_test"
+GROUP2_TITLE = "Title2"
+GROUP2_SLUG = "slug_test2"
+GROUP2_DESCRIPTION = "descr_test2"
 
 
 class PostsViewsTests(TestCase):
@@ -11,25 +22,24 @@ class PostsViewsTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.guest_client = Client()
-        cls.user = User.objects.create_user(username='User_test')
+        cls.user = User.objects.create_user(username=USERNAME)
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
 
         cls.group = Group.objects.create(
-            title="Title",
-            slug="slug_test",
-            description="descr_test"
+            title=GROUP1_TITLE,
+            slug=GROUP1_SLUG,
+            description=GROUP1_DESCRIPTION
         )
         cls.group2 = Group.objects.create(
-            title="Title2",
-            slug="slug_test2",
-            description="descr_test2",
+            title=GROUP2_TITLE,
+            slug=GROUP2_SLUG,
+            description=GROUP2_DESCRIPTION,
         )
         cls.post = Post.objects.create(
-            text='text_test',
+            text=TEXT,
             author=cls.user,
-            group=cls.group,
-            pk='1'
+            group=cls.group
         )
 
     def test_pages_uses_correct_template(self):
@@ -67,15 +77,15 @@ class PostsViewsTests(TestCase):
         """Проверка: Шаблон index сформирован с правильным контекстом."""
         response = self.authorized_client.get(reverse('posts:index'))
         post = response.context['page_obj'][0].text
-        self.assertEqual(post, 'text_test')
+        self.assertEqual(post, TEXT)
 
     def test_group_list_page_show_correct_context(self):
         """Проверка: Шаблон group_list сформирован с правильным контекстом."""
         response = (self.authorized_client.get(
             reverse('posts:group_list',
-                    kwargs={'slug': 'slug_test'})))
+                    kwargs={'slug': GROUP1_SLUG})))
         group = response.context['page_obj'][0].group.title
-        self.assertEqual(group, 'Title')
+        self.assertEqual(group, GROUP1_TITLE)
 
     def test_post_detail_list_page_show_correct_context(self):
         """Проверка: Шаблон post_detail сформирован с правильным контекстом."""
@@ -83,7 +93,7 @@ class PostsViewsTests(TestCase):
             reverse('posts:post_detail',
                     kwargs={'post_id': '1'})))
         post_detail = response.context['post'].text
-        self.assertEqual(post_detail, 'text_test')
+        self.assertEqual(post_detail, TEXT)
 
     def test_post_create_page_show_correct_context(self):
         """Проверка: Форма создания поста - post_create."""
@@ -129,93 +139,58 @@ class PostsViewsTests(TestCase):
 
     def test_post_not_in_other_group(self):
         """Проверка: Созданный пост не появился в другой группе"""
-        post = PostsViewsTests.post
+        post = self.post
         response = self.authorized_client.get(
             reverse(
                 'posts:group_list',
-                kwargs={'slug': PostsViewsTests.group2.slug}
+                kwargs={'slug': self.group2.slug}
             )
         )
         self.assertNotIn(post, response.context.get('page_obj'))
         group2 = response.context.get('group')
-        self.assertNotEqual(group2, PostsViewsTests.group)
+        self.assertNotEqual(group2, self.group)
 
 
-class PaginatorTest(TestCase):
+class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username='User_test')
+        cls.user = User.objects.create_user(username=USERNAME)
+        cls.author = User.objects.get(username=USERNAME)
         cls.group = Group.objects.create(
-            title='Title',
-            slug='slug_test',
-            description='descr_test'
+            title=GROUP1_TITLE,
+            slug=GROUP1_SLUG,
+            description=GROUP1_DESCRIPTION,
         )
-        for i in range(13):
-            cls.post = Post.objects.create(
-                text=f'post {i}',
+        cls.posts = [
+            Post(
+                text=f'{TEXT} {number_post}',
                 author=cls.user,
-                group=cls.group
+                group=cls.group,
             )
+            for number_post in range(TOTAL_POSTS)
+        ]
+        Post.objects.bulk_create(cls.posts)
 
     def setUp(self):
-        self.auth_client = Client()
-        self.auth_client.force_login(self.user)
+        self.authorized_author = Client()
 
-    def test_first_page_contains_ten_records_index(self):
-        """Проверка: Пагинатора для Первой странцы index - 10 постов"""
-        response = self.auth_client.get(reverse('posts:index'))
-        self.assertEqual(len(
-            response.context['page_obj']),
-            settings.LIMIT_POSTS_TEN
+    def test_page_contains_ten_records(self):
+        """Проверка: пагинатор на 1, 2 странице index, group_list, profile"""
+        pagin_urls = (
+            ('posts:index', None),
+            ('posts:group_list', (self.group.slug,)),
+            ('posts:profile', (self.user.username,))
         )
-
-    def test_second_page_contains_three_records_index(self):
-        """Проверка: Пагинатора для Второй странцы index - 3 поста"""
-        response = self.auth_client.get(reverse('posts:index') + '?page=2')
-        self.assertEqual(len(
-            response.context['page_obj']),
-            settings.LIMIT_POSTS_THREE
+        pages_units = (
+            ('?page=1', LIMIT_POSTS_TEN),
+            ('?page=2', LIMIT_POSTS_THREE)
         )
-
-    def test_first_page_contains_ten_records_group_list(self):
-        """Проверка: Пагинатора для Первой странцы group_list - 10 постов"""
-        response = self.auth_client.get(reverse('posts:group_list',
-                                                kwargs={'slug': 'slug_test'}))
-        self.assertEqual(len(
-            response.context['page_obj']),
-            settings.LIMIT_POSTS_TEN
-        )
-
-    def test_second_page_contains_three_records_group_list(self):
-        """Проверка: Пагинатора для Второй странцы group_list - 3 поста"""
-        response = self.auth_client.get(reverse(
-                                        'posts:group_list',
-                                        kwargs={'slug': 'slug_test'})
-                                        + '?page=2'
-                                        )
-        self.assertEqual(len(
-            response.context['page_obj']),
-            settings.LIMIT_POSTS_THREE
-        )
-
-    def test_second_page_contains_ten_records_profile(self):
-        """Проверка: Пагинатора для Первой странцы profile - 10 постов"""
-        response = self.auth_client.get(reverse('posts:profile',
-                                                kwargs={'username': self.user}
-                                                ))
-        self.assertEqual(len(
-            response.context['page_obj']),
-            settings.LIMIT_POSTS_TEN
-        )
-
-    def test_second_page_contains_three_records_profile(self):
-        """Проверка: Пагинатора для Второй странцы profile - 3 поста"""
-        response = self.auth_client.get(reverse(
-                                        'posts:profile',
-                                        kwargs={'username': self.user}
-                                        ) + '?page=2')
-        self.assertEqual(len(
-            response.context['page_obj']),
-            settings.LIMIT_POSTS_THREE
-        )
+        for address, args in pagin_urls:
+            with self.subTest(address=address):
+                for page, units in pages_units:
+                    with self.subTest(page=page):
+                        response = self.authorized_author.get(
+                            reverse(address, args=args) + page
+                        )
+        self.assertEqual(len(response.context['page_obj']), units)
