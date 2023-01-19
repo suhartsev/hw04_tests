@@ -1,21 +1,14 @@
 from unittest import TestCase
 
+from http import HTTPStatus
+
 from django.test import Client, TestCase
 from django.urls import reverse
+from django import forms
 
 from posts.forms import PostForm
 from posts.models import Group, Post, User
-
-USERNAME = 'User_test'
-TEXT = 'text_test'
-GROUP_SLUG = 'slug_test'
-GROUP_TITLE = "Title"
-GROUP_DESCRIPTION = "descr_test"
-GROUP2_TITLE = "Title2"
-GROUP2_SLUG = "slug_test2"
-GROUP2_DESCRIPTION = "descr_test2"
-PROFILE = reverse('posts:profile',
-                  kwargs={'username': USERNAME})
+from posts.tests import const
 
 
 class PostCreateFormTest(TestCase):
@@ -23,60 +16,93 @@ class PostCreateFormTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.form = PostForm()
-        cls.user = User.objects.create_user(username=USERNAME)
+        cls.user = User.objects.create_user(username=const.USERNAME)
         cls.post = Post.objects.create(
-            text=TEXT,
+            text=const.TEXT,
             author=cls.user,
         )
         cls.group = Group.objects.create(
-            title=GROUP_TITLE,
-            slug=GROUP_SLUG,
-            description=GROUP_DESCRIPTION
+            title=const.GROUP1_TITLE,
+            slug=const.GROUP1_SLUG,
+            description=const.GROUP1_DESCRIPTION
         )
         cls.group2 = Group.objects.create(
-            title=GROUP2_TITLE,
-            slug=GROUP2_SLUG,
-            description=GROUP2_DESCRIPTION,
+            title=const.GROUP2_TITLE,
+            slug=const.GROUP2_SLUG,
+            description=const.GROUP2_DESCRIPTION,
+        )
+        cls.POST_EDIT = reverse(
+            'posts:post_edit',
+            kwargs={'post_id': cls.post.pk}
         )
 
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.PROFILE = reverse(
+            'posts:profile',
+            kwargs={'username': const.USERNAME}
+        )
+        self.POST_CREATE = reverse('posts:post_create')
 
     def test_create_post_form(self):
         """Проверка: Создаётся ли новая запись в базе данных, создавая пост"""
         post_count = Post.objects.count()
         form_data = {
-            'text': TEXT,
+            'text': const.TEXT,
             'group': self.group.id
         }
         response = self.authorized_client.post(
-            reverse('posts:post_create'),
+            self.POST_CREATE,
             data=form_data,
             follow=True
         )
         post = Post.objects.first()
         self.assertRedirects(
-            response, PROFILE
+            response, self.PROFILE
         )
         self.assertEqual(Post.objects.count(), post_count + 1)
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(post.author, self.user)
 
+    def test_post_create_page_show_correct_context(self):
+        """Проверка: Форма создания поста - post_create."""
+        response = self.authorized_client.get(self.POST_CREATE)
+        form_fields = {
+            'text': forms.fields.CharField,
+            'group': forms.models.ModelChoiceField,
+        }
+        for value, expected in form_fields.items():
+            with self.subTest(value=value):
+                form_field = response.context['form'].fields[value]
+                self.assertIsInstance(form_field, expected)
+
+    def test_edit_show_correct_context(self):
+        """Проверка: форма редактирования поста, отфильтрованного по id."""
+        response = self.authorized_client.get(self.POST_EDIT)
+        form_fields = {
+            'text': forms.fields.CharField,
+            'group': forms.models.ModelChoiceField,
+        }
+        for value, expected in form_fields.items():
+            with self.subTest(value=value):
+                form_field = response.context['form'].fields[value]
+                self.assertIsInstance(form_field, expected)
+
     def test_edit_post_form(self):
         """Проверка: происходит ли изменение поста с post_id в базе данных"""
         post_count = Post.objects.count()
         form_data = {
-            'text': TEXT,
+            'text': const.TEXT,
             'group': self.group2.id
         }
 
         response = self.authorized_client.post(
-            reverse('posts:post_edit', args=[self.post.id]),
+            self.POST_EDIT,
             data=form_data,
             follow=True
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(Post.objects.count(), post_count)
         self.assertEqual(self.post.text, form_data['text'])

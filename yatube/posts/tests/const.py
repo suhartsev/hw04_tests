@@ -1,0 +1,12 @@
+TOTAL_POSTS = 13
+LIMIT_POSTS_THREE = 3
+LIMIT_POSTS_TEN = 10
+USERNAME = 'User_test'
+TEXT = 'text_test'
+GROUP1_SLUG = 'slug_test'
+GROUP1_TITLE = "Title"
+GROUP1_DESCRIPTION = "descr_test"
+GROUP2_TITLE = "Title2"
+GROUP2_SLUG = "slug_test2"
+GROUP2_DESCRIPTION = "descr_test2"
+TWO_PAGE = 2
