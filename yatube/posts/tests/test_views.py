@@ -133,7 +133,7 @@ class PaginatorViewsTest(TestCase):
     def setUp(self):
         self.authorized_author = Client()
 
-    def test_page_contains_ten_records(self):
+    def test_page_paginator_obj(self):
         """Проверка: пагинатор на 1, 2 странице index, group_list, profile"""
         slug = self.group.slug
         username = self.user.username
