@@ -147,18 +147,18 @@ class PaginatorViewsTest(TestCase):
         username = self.user.username
         num_page = {'page': const.TWO_PAGE}
         templates = (
-            ('/', '', const.LIMIT_POSTS_TEN),
-            (f'/group/{slug}/', '', const.LIMIT_POSTS_TEN),
-            (f'/profile/{username}/', '', const.LIMIT_POSTS_TEN),
-            ('/', num_page, const.LIMIT_POSTS_THREE),
-            (f'/profile/{username}/', num_page, const.LIMIT_POSTS_THREE),
-            (f'/group/{slug}/', num_page, const.LIMIT_POSTS_THREE)
+            const.INDEX_HOME,
+            (f'/group/{slug}/'),
+            (f'/profile/{username}/'),
         )
-        for address, num, test_count in templates:
+        for address in templates:
             with self.subTest(address=address):
-                response = self.authorized_author.get(address, num)
+                response = self.authorized_author.get(address)
+                response_second = self.authorized_author.get(address, num_page)
                 count_posts = len(response.context['page_obj'])
-                self.assertEqual(count_posts, test_count)
+                self.assertEqual(count_posts, const.LIMIT_POSTS_TEN)
+                count_posts_second = len(response_second.context['page_obj'])
+                self.assertEqual(count_posts_second, const.LIMIT_POSTS_THREE)
 
 # Я знаю, что тут нельзя писать. Но Вы не отвечаете в пачке с черверга
 #  19 января. Обратной связи нет
@@ -171,4 +171,5 @@ class PaginatorViewsTest(TestCase):
 # теперь в тестах вызываю self.check_contex(post) к примеру
 # я спросил у многих ребят и про это и про пагинатор ни кто не знает.
 # А Вы не отвечаете.
-# Выручвйте
+# Выручвйте если не так.
+# Это уже 4й вариант.
