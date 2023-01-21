@@ -11,8 +11,11 @@ class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(
+        cls.author_post = User.objects.create_user(
             username=const.USERNAME
+        )
+        cls.other_user = User.objects.create_user(
+            username=const.OTHER_USER
         )
         cls.group = Group.objects.create(
             title=const.GROUP1_TITLE,
@@ -21,58 +24,62 @@ class PostURLTests(TestCase):
         )
         cls.post = Post.objects.create(
             text=const.TEXT,
-            author=cls.user,
+            author=cls.author_post,
             group=cls.group
         )
         cls.POST_DETAIL = reverse(
-            'posts:post_detail',
+            const.POST_DETAIL,
             kwargs={'post_id': cls.post.id}
         )
         cls.POST_EDIT = reverse(
-            'posts:post_edit',
+            const.POST_EDIT,
             kwargs={'post_id': cls.post.id}
+        )
+        cls.PROFILE = reverse(
+            const.PROFILE,
+            kwargs={'username': cls.author_post.username}
+        )
+        cls.GROUP_LIST = reverse(
+            const.GROUP_LIST,
+            kwargs={'slug': cls.group.slug}
         )
 
     def setUp(self):
-        self.INDEX = '/'
-        self.POST_CREATE = '/create/'
-        self.PROFILE = reverse(
-            'posts:profile',
-            kwargs={'username': self.user.username}
-        )
-        self.GROUP_LIST = reverse(
-            'posts:group_list',
-            kwargs={'slug': self.group.slug}
-        )
-        self.UNEXISTRING = '/unexisting_page/'
         self.guest_client = Client()
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
+        self.author_post_client = Client()
+        self.author_post_client.force_login(self.author_post)
+        self.other_authorized_client = Client()
+        self.other_authorized_client.force_login(self.other_user)
 
-    def test_urls_exists_at_desired_location_all_users(self):
-        """Проверка: страницы доступны всем пользователям."""
-        static_urls = {
-            f'{self.INDEX}': HTTPStatus.OK,
-            f'{self.GROUP_LIST}': HTTPStatus.OK,
-            f'{self.PROFILE}': HTTPStatus.OK,
-            f'{self.POST_DETAIL}': HTTPStatus.OK,
-        }
-        for address, response_on_url in static_urls.items():
-            with self.subTest(address=address):
-                response = self.guest_client.get(address)
-                self.assertEqual(response.status_code, response_on_url)
+    def test_urls_exists_at_desired_location_client(self):
+        """Проверка: доступа страниц для Автор, Гость, Пользователь"""
+        url_code = (
+            (self.other_authorized_client and self.guest_client,
+                const.INDEX_HOME, HTTPStatus.OK),
+            (self.other_authorized_client and self.guest_client,
+                self.GROUP_LIST, HTTPStatus.OK),
+            (self.other_authorized_client and self.guest_client,
+                self.PROFILE, HTTPStatus.OK),
+            (self.other_authorized_client and self.guest_client,
+                self.POST_DETAIL, HTTPStatus.OK),
+            (self.other_authorized_client and self.guest_client,
+                const.UNEXISTRING, HTTPStatus.NOT_FOUND),
+            (self.other_authorized_client and self.author_post_client,
+                const.POST_CREATE, HTTPStatus.OK),
+            (self.author_post_client, self.POST_EDIT, HTTPStatus.OK),
+            (self.guest_client, const.POST_CREATE and self.POST_EDIT,
+                HTTPStatus.FOUND),
+        )
+        for client, url, code in url_code:
+            with self.subTest(url=url):
+                self.assertEqual(client.get(url).status_code, code)
 
-    def test_unexisting_page(self):
-        """Проверка: Страница /unexisting_page/ не существует 404"""
-        response = self.guest_client.get(f'{self.UNEXISTRING}')
-        self.assertEqual(response.status_code, 404)
-
-    def test_post_create_url_exists_at_desired_location(self):
-        """Проверка: Страница /create/ доступна авторизованному пользователю"""
-        response = self.authorized_client.get(f'{self.POST_CREATE}')
-        self.assertEqual(response.status_code, HTTPStatus.OK)
-
-    def test_post_edit_url_exists_at_desired_location(self):
-        """Проверка: Страница /posts/<post_id>/edit/ доступна автору."""
-        response = self.authorized_client.get(f'{self.POST_EDIT}')
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+# Я знаю, что тут нельзя писать. Но Вы не отвечаете в пачке с черверга
+#  19 января.
+# Я написал десяток сообщений, покажите как надо сделать,
+#  мне тяжело догадываться без обратной связи
+# Получилось сделать так все проверки в одном тесте,
+# от гостя, авторезированного пользователя и авторезированного автора,
+# проверил страници которые нужно, по другому? я не пойму,
+# с Вами нет обратной связи
+# Выручайте

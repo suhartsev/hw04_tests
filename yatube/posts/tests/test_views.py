@@ -35,19 +35,19 @@ class PostsViewsTests(TestCase):
     def test_pages_uses_correct_template(self):
         """Проверка: view-функциях используются правильные html-шаблоны"""
         templates_pages_names = {
-            reverse('posts:index'): 'posts/index.html',
-            reverse('posts:post_create'): 'posts/create_post.html',
+            reverse(const.INDEX): 'posts/index.html',
+            reverse(const.POST_CREATE_FORMS): 'posts/create_post.html',
             reverse(
-                'posts:group_list',
+                const.GROUP_LIST,
                 kwargs={'slug': self.group.slug}): 'posts/group_list.html',
             reverse(
-                'posts:profile',
+                const.PROFILE,
                 kwargs={'username': self.post.author}): 'posts/profile.html',
             reverse(
-                'posts:post_detail',
+                const.POST_DETAIL,
                 kwargs={'post_id': self.post.pk}): 'posts/post_detail.html',
             reverse(
-                'posts:post_edit',
+                const.POST_EDIT,
                 kwargs={'post_id': self.post.pk}): 'posts/create_post.html',
         }
         for reverse_name, template in templates_pages_names.items():
@@ -58,7 +58,7 @@ class PostsViewsTests(TestCase):
     def test_profile_page_shows_correct_context(self):
         """Проверка: Шаблон profile сформирован с правильным контекстом."""
         response = self.authorized_client.get(
-            reverse('posts:profile', kwargs={'username': const.USERNAME})
+            reverse(const.PROFILE, kwargs={'username': const.USERNAME})
         )
         post = response.context['page_obj'][0]
         self.assertEqual(post.text, const.TEXT)
@@ -69,7 +69,7 @@ class PostsViewsTests(TestCase):
 
     def test_index_page_show_correct_context(self):
         """Проверка: Шаблон index сформирован с правильным контекстом."""
-        response = self.authorized_client.get(reverse('posts:index'))
+        response = self.authorized_client.get(reverse(const.INDEX))
         post = response.context['page_obj'][0]
         self.assertEqual(post.text, const.TEXT)
         self.assertEqual(post.author, self.user)
@@ -79,7 +79,7 @@ class PostsViewsTests(TestCase):
     def test_group_list_page_show_correct_context(self):
         """Проверка: Шаблон group_list сформирован с правильным контекстом."""
         response = (self.authorized_client.get(
-            reverse('posts:group_list',
+            reverse(const.GROUP_LIST,
                     kwargs={'slug': const.GROUP1_SLUG})))
         group = response.context['page_obj'][0].group
         self.assertEqual(group.title, const.GROUP1_TITLE)
@@ -90,7 +90,7 @@ class PostsViewsTests(TestCase):
     def test_post_detail_list_page_show_correct_context(self):
         """Проверка: Шаблон post_detail сформирован с правильным контекстом."""
         response = (self.authorized_client.get(
-            reverse('posts:post_detail',
+            reverse(const.POST_DETAIL,
                     kwargs={'post_id': self.post.id})))
         post_detail = response.context['post'].text
         self.assertEqual(post_detail, const.TEXT)
@@ -100,7 +100,7 @@ class PostsViewsTests(TestCase):
         post = self.post
         response = self.authorized_client.get(
             reverse(
-                'posts:group_list',
+                const.GROUP_LIST,
                 kwargs={'slug': self.group2.slug}
             )
         )
@@ -151,3 +151,16 @@ class PaginatorViewsTest(TestCase):
                 response = self.authorized_author.get(address, num)
                 count_posts = len(response.context['page_obj'])
                 self.assertEqual(count_posts, test_count)
+
+# Я знаю, что тут нельзя писать. Но Вы не отвечаете в пачке с черверга
+#  19 января. Обратной связи нет
+# Я написал десяток сообщений, покажите как надо это сделать,
+# Это уже третий вид работающего теста, так как Вы просили
+# Без + '?page=2'. Я не зная как сделать, то что вы просите,
+#  покажите пожалуста
+# Это тоже я не понимаю как сделать, эта проверка
+# (self.assertEqual(post.text, const.TEXT)) используетя всего 2 раза.
+# для неё отдельный фаил с отдельным методом делать? как?
+# я спросил у многих ребят и про это и про пагинатор ни кто не знает.
+# А Вы не отвечаете.
+# Выручвйте

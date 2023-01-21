@@ -1,3 +1,4 @@
+OTHER_USER = 'other_user'
 TOTAL_POSTS = 13
 LIMIT_POSTS_THREE = 3
 LIMIT_POSTS_TEN = 10
@@ -10,3 +11,12 @@ GROUP2_TITLE = "Title2"
 GROUP2_SLUG = "slug_test2"
 GROUP2_DESCRIPTION = "descr_test2"
 TWO_PAGE = 2
+INDEX_HOME = '/'
+INDEX = 'posts:index'
+POST_CREATE = '/create/'
+PROFILE = 'posts:profile'
+POST_EDIT = 'posts:post_edit'
+UNEXISTRING = '/unexisting_page/'
+POST_DETAIL = 'posts:post_detail'
+GROUP_LIST = 'posts:group_list'
+POST_CREATE_FORMS = 'posts:post_create'

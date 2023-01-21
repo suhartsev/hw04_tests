@@ -32,18 +32,20 @@ class PostCreateFormTest(TestCase):
             description=const.GROUP2_DESCRIPTION,
         )
         cls.POST_EDIT = reverse(
-            'posts:post_edit',
+            const.POST_EDIT,
             kwargs={'post_id': cls.post.pk}
+        )
+        cls.PROFILE = reverse(
+            const.PROFILE,
+            kwargs={'username': const.USERNAME}
+        )
+        cls.POST_CREATE = reverse(
+            const.POST_CREATE_FORMS
         )
 
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
-        self.PROFILE = reverse(
-            'posts:profile',
-            kwargs={'username': const.USERNAME}
-        )
-        self.POST_CREATE = reverse('posts:post_create')
 
     def test_create_post_form(self):
         """Проверка: Создаётся ли новая запись в базе данных, создавая пост"""
