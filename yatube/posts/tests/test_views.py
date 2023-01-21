@@ -32,6 +32,14 @@ class PostsViewsTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
+    def check_contex(self, context_page):
+        """Метод проверки контекста текста поста"""
+        context_page = {
+            context_page.text: const.TEXT,
+        }
+        for context, expected in context_page.items():
+            self.assertEqual(context, expected)
+
     def test_pages_uses_correct_template(self):
         """Проверка: view-функциях используются правильные html-шаблоны"""
         templates_pages_names = {
@@ -61,7 +69,7 @@ class PostsViewsTests(TestCase):
             reverse(const.PROFILE, kwargs={'username': const.USERNAME})
         )
         post = response.context['page_obj'][0]
-        self.assertEqual(post.text, const.TEXT)
+        self.check_contex(post)
         self.assertEqual(post, self.post)
         self.assertIn('author', response.context)
         self.assertEqual(response.context['author'], self.user)
@@ -71,7 +79,7 @@ class PostsViewsTests(TestCase):
         """Проверка: Шаблон index сформирован с правильным контекстом."""
         response = self.authorized_client.get(reverse(const.INDEX))
         post = response.context['page_obj'][0]
-        self.assertEqual(post.text, const.TEXT)
+        self.check_contex(post)
         self.assertEqual(post.author, self.user)
         self.assertEqual(post.group, self.group)
         self.assertIn('page_obj', response.context)
@@ -92,8 +100,8 @@ class PostsViewsTests(TestCase):
         response = (self.authorized_client.get(
             reverse(const.POST_DETAIL,
                     kwargs={'post_id': self.post.id})))
-        post_detail = response.context['post'].text
-        self.assertEqual(post_detail, const.TEXT)
+        post_detail = response.context['post']
+        self.check_contex(post_detail)
 
     def test_post_not_in_other_group(self):
         """Проверка: Созданный пост не появился в другой группе"""
@@ -157,10 +165,10 @@ class PaginatorViewsTest(TestCase):
 # Я написал десяток сообщений, покажите как надо это сделать,
 # Это уже третий вид работающего теста, так как Вы просили
 # Без + '?page=2'. Я не зная как сделать, то что вы просите,
-#  покажите пожалуста
-# Это тоже я не понимаю как сделать, эта проверка
-# (self.assertEqual(post.text, const.TEXT)) используетя всего 2 раза.
-# для неё отдельный фаил с отдельным методом делать? как?
+#  покажите пожалуста.
+# Это тоже я не понимаю как правильно сделать,
+# (self.assertEqual(post.text, const.TEXT)) Сделал метод, вроде работает
+# теперь в тестах вызываю self.check_contex(post) к примеру
 # я спросил у многих ребят и про это и про пагинатор ни кто не знает.
 # А Вы не отвечаете.
 # Выручвйте
