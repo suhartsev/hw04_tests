@@ -35,54 +35,37 @@ class PostURLTests(TestCase):
             const.POST_EDIT,
             kwargs={'post_id': cls.post.id}
         )
-        cls.PROFILE = reverse(
-            const.PROFILE,
-            kwargs={'username': cls.author_post.username}
-        )
         cls.GROUP_LIST = reverse(
             const.GROUP_LIST,
             kwargs={'slug': cls.group.slug}
         )
 
     def setUp(self):
-        self.guest_client = Client()
-        self.author_post_client = Client()
-        self.author_post_client.force_login(self.author_post)
-        self.other_authorized_client = Client()
-        self.other_authorized_client.force_login(self.other_user)
+        self.guest = Client()
+        self.author = Client()
+        self.author.force_login(self.author_post)
+        self.other = Client()
+        self.other.force_login(self.other_user)
 
     def test_urls_exists_at_desired_location_client(self):
         """Проверка: доступа страниц для Автор, Гость, Пользователь"""
-        url_code = (
-            (self.other_authorized_client and self.guest_client,
-                const.INDEX_HOME, HTTPStatus.OK),
-            (self.other_authorized_client and self.guest_client,
-                self.GROUP_LIST, HTTPStatus.OK),
-            (self.other_authorized_client and self.guest_client,
-                self.PROFILE, HTTPStatus.OK),
-            (self.other_authorized_client and self.guest_client,
-                self.POST_DETAIL, HTTPStatus.OK),
-            (self.other_authorized_client and self.guest_client,
-                const.UNEXISTRING, HTTPStatus.NOT_FOUND),
-            (self.other_authorized_client and self.author_post_client,
-                const.POST_CREATE, HTTPStatus.OK),
-            (self.author_post_client, self.POST_EDIT, HTTPStatus.OK),
-            (self.guest_client, const.POST_CREATE and self.POST_EDIT,
+        url_code = [
+            (const.INDEX_HOME, HTTPStatus.OK, HTTPStatus.OK, HTTPStatus.OK),
+            (self.GROUP_LIST, HTTPStatus.OK, HTTPStatus.OK, HTTPStatus.OK),
+            (const.PROFILE_REV, HTTPStatus.OK, HTTPStatus.OK, HTTPStatus.OK),
+            (self.POST_DETAIL, HTTPStatus.OK, HTTPStatus.OK, HTTPStatus.OK),
+            (const.POST_CREATE, HTTPStatus.OK, HTTPStatus.OK,
                 HTTPStatus.FOUND),
-        )
-        for client, url, code in url_code:
-            with self.subTest(url=url):
-                self.assertEqual(client.get(url).status_code, code)
-
-# Я знаю, что тут нельзя писать. Но Вы не отвечаете в пачке с черверга
-#  19 января.
-# Я написал десяток сообщений, покажите как надо сделать,
-#  мне тяжело догадываться без обратной связи
-# Получилось сделать так все проверки в одном тесте,
-# от гостя, авторезированного пользователя и авторезированного автора,
-# проверил страници которые нужно, по другому? я не пойму,
-# с Вами нет обратной связи
-# Выручайте
-# С реверсами, не могу вынести в отдельный файл с константами,
-# там пдсвечивает, ошибки вылазят,
-# покажите как, я не против делать, знать бы как.
+            (self.POST_EDIT, HTTPStatus.OK, HTTPStatus.FOUND,
+                HTTPStatus.FOUND),
+            (const.UNEXISTRING, HTTPStatus.NOT_FOUND, HTTPStatus.NOT_FOUND,
+                HTTPStatus.NOT_FOUND),
+        ]
+        for urls, auth_cond, other_cond, guest_cond in url_code:
+            for client, cond in [
+                (self.author, auth_cond),
+                (self.other, other_cond),
+                (self.guest, guest_cond)
+            ]:
+                with self.subTest(urls=urls):
+                    self.assertEqual(client.get(urls).status_code, cond)

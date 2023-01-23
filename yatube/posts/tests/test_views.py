@@ -27,15 +27,32 @@ class PostsViewsTests(TestCase):
             author=cls.user,
             group=cls.group
         )
+        cls.POST_DETAIL = reverse(
+            const.POST_DETAIL,
+            kwargs={'post_id': cls.post.id}
+        )
+        cls.POST_EDIT = reverse(
+            const.POST_EDIT,
+            kwargs={'post_id': cls.post.id}
+        )
+        cls.GROUP_LIST = reverse(
+            const.GROUP_LIST,
+            kwargs={'slug': cls.group.slug}
+        )
+        cls.GROUP_LIST_GROUP_2 = reverse(
+            const.GROUP_LIST,
+            kwargs={'slug': cls.group2.slug}
+        )
 
     def setUp(self):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
     def check_contex(self, context_page):
-        """Метод проверки контекста текста поста"""
+        """Метод проверки контекста текста поста, автора"""
         context_page = {
             context_page.text: const.TEXT,
+            context_page.author: self.user,
         }
         for context, expected in context_page.items():
             self.assertEqual(context, expected)
@@ -43,20 +60,12 @@ class PostsViewsTests(TestCase):
     def test_pages_uses_correct_template(self):
         """Проверка: view-функциях используются правильные html-шаблоны"""
         templates_pages_names = {
-            reverse(const.INDEX): 'posts/index.html',
-            reverse(const.POST_CREATE_FORMS): 'posts/create_post.html',
-            reverse(
-                const.GROUP_LIST,
-                kwargs={'slug': self.group.slug}): 'posts/group_list.html',
-            reverse(
-                const.PROFILE,
-                kwargs={'username': self.post.author}): 'posts/profile.html',
-            reverse(
-                const.POST_DETAIL,
-                kwargs={'post_id': self.post.pk}): 'posts/post_detail.html',
-            reverse(
-                const.POST_EDIT,
-                kwargs={'post_id': self.post.pk}): 'posts/create_post.html',
+            const.INDEX_REV: 'posts/index.html',
+            const.POST_CREATE_REV: 'posts/create_post.html',
+            self.GROUP_LIST: 'posts/group_list.html',
+            const.PROFILE_REV: 'posts/profile.html',
+            self.POST_DETAIL: 'posts/post_detail.html',
+            self.POST_EDIT: 'posts/create_post.html',
         }
         for reverse_name, template in templates_pages_names.items():
             with self.subTest(template=template):
@@ -65,30 +74,24 @@ class PostsViewsTests(TestCase):
 
     def test_profile_page_shows_correct_context(self):
         """Проверка: Шаблон profile сформирован с правильным контекстом."""
-        response = self.authorized_client.get(
-            reverse(const.PROFILE, kwargs={'username': const.USERNAME})
-        )
+        response = self.authorized_client.get(const.PROFILE_REV)
         post = response.context['page_obj'][0]
         self.check_contex(post)
         self.assertEqual(post, self.post)
         self.assertIn('author', response.context)
-        self.assertEqual(response.context['author'], self.user)
         self.assertIn('page_obj', response.context)
 
     def test_index_page_show_correct_context(self):
         """Проверка: Шаблон index сформирован с правильным контекстом."""
-        response = self.authorized_client.get(reverse(const.INDEX))
+        response = self.authorized_client.get(const.INDEX_REV)
         post = response.context['page_obj'][0]
         self.check_contex(post)
-        self.assertEqual(post.author, self.user)
         self.assertEqual(post.group, self.group)
         self.assertIn('page_obj', response.context)
 
     def test_group_list_page_show_correct_context(self):
         """Проверка: Шаблон group_list сформирован с правильным контекстом."""
-        response = (self.authorized_client.get(
-            reverse(const.GROUP_LIST,
-                    kwargs={'slug': const.GROUP1_SLUG})))
+        response = self.authorized_client.get(self.GROUP_LIST)
         group = response.context['page_obj'][0].group
         self.assertEqual(group.title, const.GROUP1_TITLE)
         self.assertEqual(group.description, const.GROUP1_DESCRIPTION)
@@ -97,21 +100,14 @@ class PostsViewsTests(TestCase):
 
     def test_post_detail_list_page_show_correct_context(self):
         """Проверка: Шаблон post_detail сформирован с правильным контекстом."""
-        response = (self.authorized_client.get(
-            reverse(const.POST_DETAIL,
-                    kwargs={'post_id': self.post.id})))
+        response = self.authorized_client.get(self.POST_DETAIL,)
         post_detail = response.context['post']
         self.check_contex(post_detail)
 
     def test_post_not_in_other_group(self):
         """Проверка: Созданный пост не появился в другой группе"""
         post = self.post
-        response = self.authorized_client.get(
-            reverse(
-                const.GROUP_LIST,
-                kwargs={'slug': self.group2.slug}
-            )
-        )
+        response = self.authorized_client.get(self.GROUP_LIST_GROUP_2)
         self.assertNotIn(post, response.context.get('page_obj'))
         group2 = response.context.get('group')
         self.assertNotEqual(group2, self.group)
@@ -128,6 +124,10 @@ class PaginatorViewsTest(TestCase):
             slug=const.GROUP1_SLUG,
             description=const.GROUP1_DESCRIPTION,
         )
+        cls.GROUP_LIST = reverse(
+            const.GROUP_LIST,
+            kwargs={'slug': cls.group.slug}
+        )
         cls.posts = [
             Post(
                 text=f'{const.TEXT} {number_post}',
@@ -143,13 +143,11 @@ class PaginatorViewsTest(TestCase):
 
     def test_page_paginator_obj(self):
         """Проверка: пагинатор на 1, 2 странице index, group_list, profile"""
-        slug = self.group.slug
-        username = self.user.username
         num_page = {'page': const.TWO_PAGE}
         templates = (
             const.INDEX_HOME,
-            (f'/group/{slug}/'),
-            (f'/profile/{username}/'),
+            self.GROUP_LIST,
+            const.PROFILE_REV,
         )
         for address in templates:
             with self.subTest(address=address):
@@ -159,17 +157,3 @@ class PaginatorViewsTest(TestCase):
                 self.assertEqual(count_posts, const.LIMIT_POSTS_TEN)
                 count_posts_second = len(response_second.context['page_obj'])
                 self.assertEqual(count_posts_second, const.LIMIT_POSTS_THREE)
-
-# Я знаю, что тут нельзя писать. Но Вы не отвечаете в пачке с черверга
-#  19 января. Обратной связи нет
-# Я написал десяток сообщений, покажите как надо это сделать,
-# Это уже третий вид работающего теста, так как Вы просили
-# Без + '?page=2'. Я не зная как сделать, то что вы просите,
-#  покажите пожалуста.
-# Это тоже я не понимаю как правильно сделать,
-# (self.assertEqual(post.text, const.TEXT)) Сделал метод, вроде работает
-# теперь в тестах вызываю self.check_contex(post) к примеру
-# я спросил у многих ребят и про это и про пагинатор ни кто не знает.
-# А Вы не отвечаете.
-# Выручвйте если не так.
-# Это уже 4й вариант.

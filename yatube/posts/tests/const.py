@@ -1,3 +1,5 @@
+from django.urls import reverse
+
 OTHER_USER = 'other_user'
 TOTAL_POSTS = 13
 LIMIT_POSTS_THREE = 3
@@ -19,4 +21,6 @@ POST_EDIT = 'posts:post_edit'
 UNEXISTRING = '/unexisting_page/'
 POST_DETAIL = 'posts:post_detail'
 GROUP_LIST = 'posts:group_list'
-POST_CREATE_FORMS = 'posts:post_create'
+INDEX_REV = reverse(INDEX)
+PROFILE_REV = reverse(PROFILE, kwargs={'username': USERNAME})
+POST_CREATE_REV = reverse('posts:post_create')

@@ -35,13 +35,6 @@ class PostCreateFormTest(TestCase):
             const.POST_EDIT,
             kwargs={'post_id': cls.post.pk}
         )
-        cls.PROFILE = reverse(
-            const.PROFILE,
-            kwargs={'username': const.USERNAME}
-        )
-        cls.POST_CREATE = reverse(
-            const.POST_CREATE_FORMS
-        )
 
     def setUp(self):
         self.authorized_client = Client()
@@ -55,13 +48,13 @@ class PostCreateFormTest(TestCase):
             'group': self.group.id
         }
         response = self.authorized_client.post(
-            self.POST_CREATE,
+            const.POST_CREATE_REV,
             data=form_data,
             follow=True
         )
         post = Post.objects.first()
         self.assertRedirects(
-            response, self.PROFILE
+            response, const.PROFILE_REV
         )
         self.assertEqual(Post.objects.count(), post_count + 1)
         self.assertEqual(post.text, form_data['text'])
@@ -70,7 +63,7 @@ class PostCreateFormTest(TestCase):
 
     def test_post_create_page_show_correct_context(self):
         """Проверка: Форма создания поста - post_create."""
-        response = self.authorized_client.get(self.POST_CREATE)
+        response = self.authorized_client.get(const.POST_CREATE_REV)
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.models.ModelChoiceField,
@@ -99,7 +92,6 @@ class PostCreateFormTest(TestCase):
             'text': const.TEXT,
             'group': self.group2.id
         }
-
         response = self.authorized_client.post(
             self.POST_EDIT,
             data=form_data,
