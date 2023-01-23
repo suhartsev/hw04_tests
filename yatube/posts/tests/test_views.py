@@ -139,11 +139,10 @@ class PaginatorViewsTest(TestCase):
         Post.objects.bulk_create(cls.posts)
 
     def setUp(self):
-        self.authorized_author = Client()
+        self.authorized = Client()
 
     def test_page_paginator_obj(self):
         """Проверка: пагинатор на 1, 2 странице index, group_list, profile"""
-        num_page = {'page': const.TWO_PAGE}
         templates = (
             const.INDEX_HOME,
             self.GROUP_LIST,
@@ -151,9 +150,11 @@ class PaginatorViewsTest(TestCase):
         )
         for address in templates:
             with self.subTest(address=address):
-                response = self.authorized_author.get(address)
-                response_second = self.authorized_author.get(address, num_page)
-                count_posts = len(response.context['page_obj'])
-                self.assertEqual(count_posts, const.LIMIT_POSTS_TEN)
-                count_posts_second = len(response_second.context['page_obj'])
-                self.assertEqual(count_posts_second, const.LIMIT_POSTS_THREE)
+                response_1 = self.authorized.get(address, None)
+                response_2 = self.authorized.get(
+                    address, {'page': const.TWO_PAGE}
+                )
+                count_posts_1 = len(response_1.context['page_obj'])
+                self.assertEqual(count_posts_1, const.LIMIT_POSTS_TEN)
+                count_posts_2 = len(response_2.context['page_obj'])
+                self.assertEqual(count_posts_2, const.LIMIT_POSTS_THREE)
