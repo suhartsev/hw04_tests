@@ -150,7 +150,7 @@ class PaginatorViewsTest(TestCase):
         )
         for address in templates:
             with self.subTest(address=address):
-                response_1 = self.authorized.get(address, None)
+                response_1 = self.authorized.get(address)
                 response_2 = self.authorized.get(
                     address, {'page': const.TWO_PAGE}
                 )
