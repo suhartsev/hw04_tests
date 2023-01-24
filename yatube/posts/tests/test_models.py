@@ -8,15 +8,15 @@ class PostModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username=const.USERNAME)
+        cls.user = User.objects.create_user(username=const.STR_USERNAME)
         cls.group = Group.objects.create(
-            title=const.GROUP1_TITLE,
-            slug=const.GROUP1_SLUG,
-            description=const.GROUP1_DESCRIPTION,
+            title=const.STR_GROUP1_TITLE,
+            slug=const.STR_GROUP1_SLUG,
+            description=const.STR_GROUP1_DESCRIPTION,
         )
         cls.post = Post.objects.create(
             author=cls.user,
-            text=const.TEXT,
+            text=const.STR_TEXT,
         )
 
     def test_models_have_correct_object_names(self):
